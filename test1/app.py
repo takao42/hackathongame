@@ -2,8 +2,13 @@ from flask import Flask,render_template, request,json
 from random import randint
 
 class Player:
-	""" player class """
+	""" 
+	player class 
+	"""
+
 	def __init__(self, name, ID, x, y):
+		""" constructor """
+
 		self.name = name
 		self.ID = ID
 		self.x = x
@@ -25,14 +30,15 @@ class Player:
 		self.x += xMove
 		self.y += yMove
 
-
-	def setX(self, x):
+	def setPos(self, x, y):
 		self.x = x
-
-	def setY(self, y):
-		self.y = y
+		self.y = y		
 
 	def getInfo(self):
+		""" 
+		return player info as a dictionary 
+		"""
+
 		info = {'name':self.name, 'ID':self.ID, 'x':self.x, 'y':self.y}
 		return info
 
@@ -68,8 +74,7 @@ class GameManager:
 
 		for idx in range(len(self.playerList)):
 			if self.playerList[idx].getID() == ID:
-				self.playerList[idx].setX(x)
-				self.playerList[idx].setY(y)
+				self.playerList[idx].set(x, y)
 
 	def movePlayer(self, ID, xUnitMove, yUnitMove):
 		""" 
@@ -78,7 +83,13 @@ class GameManager:
 
 		for idx in range(len(self.playerList)):
 			if self.playerList[idx].getID() == ID:
-				self.playerList[idx].move(xUnitMove*self.velocity, yUnitMove*self.velocity)
+				futureX = self.playerList[idx].getX() + xUnitMove*self.velocity
+				futureY = self.playerList[idx].getY() + yUnitMove*self.velocity
+				xIsInRange = futureX > 0 and futureX < 500
+				yIsInRange = futureY > 0 and futureY < 500
+				if(xIsInRange and yIsInRange):
+					# edge case
+					self.playerList[idx].move(xUnitMove*self.velocity, yUnitMove*self.velocity)
 
 	def delPlayer(self, ID):
 		"""
@@ -101,6 +112,7 @@ class GameManager:
 		in json format
 		playerDict = {PlayerName:{ID, x, y}}
 		"""
+
 		playerDict = {}
 		renderID = 0
 		for player in self.playerList:
@@ -124,12 +136,19 @@ class GameManager:
 
 
 app = Flask(__name__)
+
+# display only errors of server
+import logging
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
+
+# object of game manaber
 manager = GameManager()
 
 # game start page
 @app.route('/')
 def game():
-	return render_template('index.html')
+	return render_template('game.html')
 
 # game signup page
 @app.route('/signUp')
@@ -139,16 +158,22 @@ def signUp():
 # cgi script to process post data
 @app.route('/addNewPlayer', methods=['POST'])
 def addNewPlayer():
-	print("New Player Joined")
+	print("join request from new player")
 	
 	newPlayer = request.get_json()
 	info = manager.addNewPlayer(newPlayer['name'])
 	if info is not None:
-		print("new player successfully added")
+		print("{} successfully joined".format(newPlayer['name']))
 	else:
 		print("new player couldn't be added")
 
 	return json.dumps(info)
+
+@app.route('/signUpUser', methods=['POST'])
+def signUpUser():
+    user = request.get_json()
+    print(user)
+    return json.dumps({'status':'successful', 'data':'shit'});
 
 # cgi script to process post data
 @app.route('/gameState', methods=['POST'])
@@ -158,10 +183,10 @@ def gameState():
 	#print(player)
 	#player = request.form['player']
 	playerData = request.get_json()
-	print('new move {}'.format(playerData))
+	#print('new move {}'.format(playerData))
 	manager.movePlayer(playerData['ID'], playerData['xUnitMove'], playerData['yUnitMove'])
 
-	print(manager.getAllAsDict())
+	#print(manager.getAllAsDict())
 	return json.dumps(manager.getAllAsDict())
 
 if __name__=="__main__":

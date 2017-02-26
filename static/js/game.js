@@ -12,6 +12,7 @@ function preload() {
     // Load our image assets
     game.load.image('tank', 'static/img/tank.png');
     game.load.image('tankgun', 'static/img/tankgun.png');
+    //game.load.image('ground', 'static/img/ground.png');
 }
  
 // Called after preload
@@ -27,6 +28,12 @@ function create() {
  
     // Add key input to the game
     this.keys = game.input.keyboard.createCursorKeys();
+    this.upKey = game.input.keyboard.addKey(Phaser.Keyboard.W);
+    this.leftKey = game.input.keyboard.addKey(Phaser.Keyboard.A);
+    this.downKey = game.input.keyboard.addKey(Phaser.Keyboard.S);
+    this.rightKey = game.input.keyboard.addKey(Phaser.Keyboard.D);
+
+    game.input.onDown.add(shoot, this);
 
     // local list of all players
     this.playerList = []
@@ -61,6 +68,29 @@ function create() {
     });
 
 }
+
+
+function shoot() {
+
+    var xMouse = this.input.mousePointer.x;
+    var yMouse = this.input.mousePointer.y;
+
+    $.ajax({
+        url: '/shootBullet', 
+        type: 'POST', 
+        dataType: 'json',
+        context: this,
+        async: false, 
+        data: JSON.stringify({ID:this.playerID, xMouse:xMouse, yMouse:yMouse}),
+        contentType: "application/json; charset=utf-8",
+
+        success: function(response) {
+            //  get your element to update and inject some content
+
+
+        }
+    });
+}
  
 // Called once every frame, ideally 60 times per second
 function update() {
@@ -70,17 +100,19 @@ function update() {
     var angtank = 0;
     var upDown = 0;
 
+    
+
     // Poll the arrow keys to move the player
-    if (this.keys.left.isDown) {
+    if (this.keys.left.isDown || this.leftKey.isDown ) {
 		angtank = -5;      			
     }
-    if (this.keys.right.isDown) {
+    if (this.keys.right.isDown || this.rightKey.isDown) {
 		angtank = 5;
     }
-    if (this.keys.up.isDown) {
+    if (this.keys.up.isDown || this.upKey.isDown) {
         upDown = 1;
     }
-    if (this.keys.down.isDown) {
+    if (this.keys.down.isDown || this.downKey.isDown) {
         upDown = -1;
     }
   
@@ -119,6 +151,8 @@ function update() {
                     this.gunList.push(newPlayerGun)
                 }
                 for(var i = 0; i < response.count; i++){
+                    // render all players
+
                     var renderID = 'renderID' + i;
                     this.playerList[i].x = response[renderID].x;
                     this.playerList[i].y = response[renderID].y;
@@ -139,7 +173,7 @@ function update() {
         }
     });
 
-    // render all players
+
 
 
 }

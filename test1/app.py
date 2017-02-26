@@ -45,7 +45,7 @@ class GameManager:
 		# dictionary of players
 		self.playerList = []
 		self.okID = 0
-		self.velocity = 8
+		self.velocity = 4
 
 	def addNewPlayer(self, name):
 		""" 
@@ -107,6 +107,7 @@ class GameManager:
 			info = player.getInfo()
 			playerDict['renderID{}'.format(renderID)] = {'name':info['name'], 'ID': player.ID, 'x':info['x'], 'y':info['y']}
 			renderID += 1
+		playerDict['count'] = renderID 
 		return playerDict
 
 	def getNum(self):

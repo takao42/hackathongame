@@ -1,8 +1,4 @@
-// Global object to store our game parameters
-var BallWorld = {
-    velocity: 8
-};
- 
+
 // Create a new Phaser game object with a single state that has 3 functions
 var game = new Phaser.Game(500, 500, Phaser.AUTO, '', {
     preload: preload,
@@ -31,8 +27,10 @@ function create() {
     // Add key input to the game
     this.keys = game.input.keyboard.createCursorKeys();
 
-    this.ball = game.add.sprite(100, 100, 'ball');
-    this.ball.anchor.set(0.5, 0.5);
+    // local list of all players
+    this.playerList = []
+
+    
 
     // request adding new player to the game server
     $.ajax({
@@ -53,10 +51,14 @@ function create() {
             //this.ball = game.add.sprite(game.world.centerX, game.world.centerY, 'ball');
             
             //console.log(response.x)
-            this.ball.x = response.x;
-            this.ball.y = response.y;
+            //this.ball.x = response.x;
+            //this.ball.y = response.y;
             this.playerID = response.ID;
+
+            player = game.add.sprite(response.x, response.y, 'ball');
+            player.anchor.set(0.5, 0.5);
             
+            this.playerList.push(player)
         }
     });
 
@@ -82,7 +84,8 @@ function update() {
         yMove = 1;
     }
 
-    // request adding new player to the game server
+    // send the current position to the server and
+    // recieve the positions of all the players
     $.ajax({
         url: '/gameState', 
         type: 'POST', 
@@ -94,11 +97,33 @@ function update() {
 
         success: function(response) {
             //  get your element to update and inject some content
-            console.log(response);
-            console.log(response.renderID0.x);
-            this.ball.x = response.renderID0.x;
-            this.ball.x = response['renderID0'].x;
-            this.ball.y = response.renderID0.y;
+            //console.log(response);
+            //console.log(response.renderID0.x);
+            //this.ball.x = response.renderID0.x;
+            if (response.count > 0) {
+                //console.log(response.count);
+                //console.log(this.playerList.length);
+                if(this.playerList.length < response.count){
+                    // add the new player
+
+                    var renderID = 'renderID' + (response.count-1);
+                    console.log(renderID)
+                    newPlayer = game.add.sprite(response[renderID].x, response[renderID].y, 'ball');
+                    newPlayer.anchor.set(0.5, 0.5);
+                    this.playerList.push(newPlayer)
+                }
+                for(var i = 0; i < response.count; i++){
+                    var renderID = 'renderID' + i;
+                    this.playerList[i].x = response[renderID].x;
+                    this.playerList[i].y = response[renderID].y;
+                    
+                }
+                
+                
+                
+            }
+            
+            
         }
     });
 

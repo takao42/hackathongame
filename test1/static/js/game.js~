@@ -9,8 +9,7 @@ var game = new Phaser.Game(500, 500, Phaser.AUTO, '', {
 function preload() {
  
     // Load our image assets
-    game.load.image('ball', 'static/img/tank.png');
-    game.load.image('ball2', 'static/img/tankgun.png');
+    game.load.image('ball', 'static/img/ball.png');
 }
  
 // Called after preload

@@ -83,7 +83,7 @@ class Bullet:
 		self.x += self.speed*math.cos(math.radians(self.angle))
 		self.y += self.speed*math.sin(math.radians(self.angle))
 
-		print("{},{}".format(self.x, self.y))
+		#print("{},{}".format(self.x, self.y))
 
 class GameManager:
 	""" Manages game state """
@@ -101,11 +101,14 @@ class GameManager:
 		self.speed = 2
 
 	def addNewBullet(self, x, y, angle):
+		print("new bullet")
 		newBullet = Bullet(x, y, angle)
 		self.bulletList.append(newBullet)
 
 	def updateBullets(self):
-		for idx in range(len(self.bulletList)):
+		#print(len(self.bulletList))
+		idx = 0
+		for i in range(len(self.bulletList)):
 			bullet = self.bulletList[idx]
 			bullet.update()
 
@@ -115,6 +118,8 @@ class GameManager:
 				# edge case
 				self.bulletList.pop(idx)
 				print("bullet deleted")
+			else:
+				idx += 1
 
 			
 	def addNewPlayer(self, name):
@@ -194,19 +199,24 @@ class GameManager:
 
 	def getAllAsDict(self):
 		""" 
-		return the list of all players
+		return the list of all players and bullets
 		in json format
 		playerDict = {PlayerName:{ID, x, y}}
 		"""
 
-		playerDict = {}
+		infoDict = {}
 		renderID = 0
 		for player in self.playerList:
 			info = player.getInfo()
-			playerDict['renderID{}'.format(renderID)] = {'name':info['name'], 'ID': player.ID, 'x':info['x'], 'y':info['y'], 'at':info['at'], 'ag':info['ag']}
+			infoDict['renderID{}'.format(renderID)] = {'name':info['name'], 'ID': player.ID, 'x':info['x'], 'y':info['y'], 'at':info['at'], 'ag':info['ag']}
 			renderID += 1
-		playerDict['count'] = renderID 
-		return playerDict
+		infoDict['playerCount'] = len(self.playerList)
+		bulletRenderID = 0
+		for bullet in self.bulletList:
+			infoDict['bulletRenderID{}'.format(bulletRenderID)] = {'x':bullet.getX(),'y':bullet.getY()}
+			bulletRenderID += 1
+		infoDict['bulletCount'] = len(self.bulletList)
+		return infoDict
 
 	def getNum(self):
 		""" 

@@ -128,17 +128,15 @@ function update() {
         contentType: "application/json; charset=utf-8",
 
         success: function(response) {
-            //  get your element to update and inject some content
-            //console.log(response);
-            //console.log(response.renderID0.x);
-            //this.ball.x = response.renderID0.x;
-            if (response.count > 0) {
-                //console.log(response.count);
-                //console.log(this.playerList.length);
-                if(this.playerList.length < response.count){
+            //  get all the positions of players and bullets
+
+            if (response.playerCount > 0) {
+                // if there is any player
+
+                if(this.playerList.length < response.playerCount){
                     // add the new player
 
-                    var renderID = 'renderID' + (response.count-1);
+                    var renderID = 'renderID' + (response.playerCount-1);
                     console.log(renderID)
                     newPlayer = game.add.sprite(response[renderID].x, response[renderID].y, 'tank');
                     newPlayer.anchor.set(0.5, 0.5);
@@ -150,7 +148,7 @@ function update() {
                     newPlayerGun.angle = (response[renderID].ag);
                     this.gunList.push(newPlayerGun)
                 }
-                for(var i = 0; i < response.count; i++){
+                for(var i = 0; i < response.playerCount; i++){
                     // render all players
 
                     var renderID = 'renderID' + i;
@@ -160,8 +158,18 @@ function update() {
                     this.gunList[i].x = response[renderID].x;
                     this.gunList[i].y = response[renderID].y;
 					this.gunList[i].angle = response[renderID].ag;                   
+                }                 
+            }
+            if (response.bulletCount > 0) {
+                // if there is any bullet
+
+                for(var i = 0; i < response.bulletCount; i++){
+                    var renderID = 'bulletRenderID' + i;
+                    var bullet = new Phaser.Circle(response[renderID].x, response[renderID].y, 5);
+                    game.debug.geom(bullet, '#000000');
                 }
-                 
+                
+                
             }
             
 	    },

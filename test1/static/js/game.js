@@ -28,25 +28,33 @@ function create() {
     // Change background color
     game.stage.backgroundColor = '#87CEEB';
  
-    // Add the ball to the middle of the game area
-    this.ball = game.add.sprite(game.world.centerX, game.world.centerY, 'ball');
-    this.ball.anchor.set(0.5, 0.5);
- 
     // Add key input to the game
     this.keys = game.input.keyboard.createCursorKeys();
 
-	$.ajax({
-		url: '/gameState',
-		data: {a:1, b:2},
-		type: 'POST',
+    var playerInfo
 
-		success: function(response){
-			console.log(response);
-		},
-		error: function(error){
-			console.log(error);
-		}
-	});
+    // request adding new player to the game server
+    $.ajax({
+        url: '/addNewPlayer', 
+        type: 'POST', 
+        dataType: 'json', 
+        //data: JSON.stringify({testdata:"aaaa"}),
+        data: JSON.stringify({Player:"ShittyPlayer"}),
+        contentType: "application/json; charset=utf-8",
+
+        success: function(response) {
+            //  get your element to update and inject some content
+            console.log(response);
+            playerInfo = JSON.parse(response);
+        }
+    });
+
+    console.log(playerInfo);
+
+    // Add the ball to the middle of the game area
+    console.log(game.world.centerX);
+    this.ball = game.add.sprite(game.world.centerX, game.world.centerY, 'ball');
+    this.ball.anchor.set(0.5, 0.5);
 }
  
 // Called once every frame, ideally 60 times per second

@@ -9,6 +9,12 @@ class Player:
 		self.x = x
 		self.y = y
 
+	def setX(self, x):
+		self.x = x
+
+	def setY(self, y):
+		self.y = y
+
 	def getInfo(self):
 		info = {'Player':self.name, 'ID':self.ID, 'x':self.x, 'y':self.y}
 		return info
@@ -35,6 +41,12 @@ class GameManager:
 		self.okID += 1
 
 		return newPlayer.getInfo()
+
+	def updatePlayerPos(self, ID, x, y):
+		for idx, player in self.playerList:
+			if player.ID == ID:
+				self.playerList[idx].setX(x)
+				self.playerList[idx].setY(y)
 
 	def delPlayer(self, ID):
 		"""
@@ -106,14 +118,16 @@ def addNewPlayer():
 # cgi script to process post data
 @app.route('/gameState', methods=['POST'])
 def gameState():
-	print("post data recieved")
+	#print("new player position ")
 	#player = request.get_json(force=True)
 	#print(player)
 	#player = request.form['player']
 	playerData = request.get_json()
-	print(playerData)
+	print('new position {}'.format(playerData))
+	#manager.updatePlayerPos()
 
-	return json.dumps(manager = getAllInJson)
+	#return json.dumps(manager.getAllInJson())
+	return {'someshit':'afafa'}
 
 if __name__=="__main__":
 	app.run(host='0.0.0.0')

@@ -31,35 +31,64 @@ function create() {
     // Add key input to the game
     this.keys = game.input.keyboard.createCursorKeys();
 
-    var playerInfo
+    this.ball = game.add.sprite(100, 100, 'ball');
+    this.ball.anchor.set(0.5, 0.5);
+
+    var playerX = 0;
+    var playerY = 0;
+    var playerID = 0;
 
     // request adding new player to the game server
     $.ajax({
         url: '/addNewPlayer', 
         type: 'POST', 
-        dataType: 'json', 
-        //data: JSON.stringify({testdata:"aaaa"}),
+        dataType: 'json',
+        async: false, 
         data: JSON.stringify({Player:"ShittyPlayer"}),
         contentType: "application/json; charset=utf-8",
 
         success: function(response) {
             //  get your element to update and inject some content
             console.log(response);
-            playerInfo = JSON.parse(response);
+            //playerInfo = JSON.parse(response);
+            //console.log(playerInfo);
+            // Add the ball to the middle of the game area
+            //this.ball = game.add.sprite(game.world.centerX, game.world.centerY, 'ball');
+            
+            //console.log(response.x)
+            playerX = response.x;
+            playerY = response.y;
+            playerID = response.ID;
+            
         }
     });
 
-    console.log(playerInfo);
+    this.ball.x = playerX;
+    this.ball.y = playerY;
+    this.playerID = playerID;
 
-    // Add the ball to the middle of the game area
-    console.log(game.world.centerX);
-    this.ball = game.add.sprite(game.world.centerX, game.world.centerY, 'ball');
-    this.ball.anchor.set(0.5, 0.5);
+
+    // request adding new player to the game server
+    $.ajax({
+        url: '/gameState', 
+        type: 'POST', 
+        dataType: 'json',
+        async: false, 
+        data: JSON.stringify({ID:this.playerID, x:this.ball.x, y:this.ball.y}),
+        contentType: "application/json; charset=utf-8",
+
+        success: function(response) {
+            //  get your element to update and inject some content
+            console.log(response);
+        }
+    });
+    
+
 }
  
 // Called once every frame, ideally 60 times per second
 function update() {
- 
+
     // Poll the arrow keys to move the ball
     if (this.keys.left.isDown) {
         this.ball.x -= BallWorld.velocity;
@@ -90,21 +119,9 @@ function update() {
         this.ball.y = game.height - halfHeight;
     }
 
+ 
+    
 
-    /*
-    var player = 0;
-	var position = [this.ball.x, this.ball.y];
-	$.ajax({
-		url: '/gameState',
-		data: [player, position],
-		type: 'POST',
 
-		success: function(response){
-			console.log(response);
-		},
-		error: function(error){
-			console.log(error);
-		}
-	});
-	*/
+    
 }

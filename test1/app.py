@@ -9,6 +9,23 @@ class Player:
 		self.x = x
 		self.y = y
 
+	def getName(self):
+		return self.name
+
+	def getID(self):
+		return self.ID
+
+	def getX(self):
+		return self.x
+
+	def getY(self):
+		return self.y
+
+	def move(self, xMove, yMove):
+		self.x += xMove
+		self.y += yMove
+
+
 	def setX(self, x):
 		self.x = x
 
@@ -16,7 +33,7 @@ class Player:
 		self.y = y
 
 	def getInfo(self):
-		info = {'Player':self.name, 'ID':self.ID, 'x':self.x, 'y':self.y}
+		info = {'name':self.name, 'ID':self.ID, 'x':self.x, 'y':self.y}
 		return info
 
 class GameManager:
@@ -28,6 +45,7 @@ class GameManager:
 		# dictionary of players
 		self.playerList = []
 		self.okID = 0
+		self.velocity = 8
 
 	def addNewPlayer(self, name):
 		""" 
@@ -43,10 +61,24 @@ class GameManager:
 		return newPlayer.getInfo()
 
 	def updatePlayerPos(self, ID, x, y):
-		for idx, player in self.playerList:
-			if player.ID == ID:
+		""" 
+		directly update the position of the player 
+		with the given ID
+		"""
+
+		for idx in range(len(self.playerList)):
+			if self.playerList[idx].getID() == ID:
 				self.playerList[idx].setX(x)
 				self.playerList[idx].setY(y)
+
+	def movePlayer(self, ID, xUnitMove, yUnitMove):
+		""" 
+		move the player with the given ID 
+		"""
+
+		for idx in range(len(self.playerList)):
+			if self.playerList[idx].getID() == ID:
+				self.playerList[idx].move(xUnitMove*self.velocity, yUnitMove*self.velocity)
 
 	def delPlayer(self, ID):
 		"""
@@ -63,17 +95,19 @@ class GameManager:
 		"""
 		return self.playerList
 
-	def getAllInJson(self):
+	def getAllAsDict(self):
 		""" 
 		return the list of all players
 		in json format
 		playerDict = {PlayerName:{ID, x, y}}
 		"""
 		playerDict = {}
+		renderID = 0
 		for player in self.playerList:
 			info = player.getInfo()
-			playerDict = {info['Player']:{'ID':info['ID'], 'x':info['x'], 'y':info['y']}}
-		return self.playerDict
+			playerDict['renderID{}'.format(renderID)] = {'name':info['name'], 'ID': player.ID, 'x':info['x'], 'y':info['y']}
+			renderID += 1
+		return playerDict
 
 	def getNum(self):
 		""" 
@@ -107,7 +141,7 @@ def addNewPlayer():
 	print("New Player Joined")
 	
 	newPlayer = request.get_json()
-	info = manager.addNewPlayer(newPlayer['Player'])
+	info = manager.addNewPlayer(newPlayer['name'])
 	if info is not None:
 		print("new player successfully added")
 	else:
@@ -123,11 +157,11 @@ def gameState():
 	#print(player)
 	#player = request.form['player']
 	playerData = request.get_json()
-	print('new position {}'.format(playerData))
-	#manager.updatePlayerPos()
+	print('new move {}'.format(playerData))
+	manager.movePlayer(playerData['ID'], playerData['xUnitMove'], playerData['yUnitMove'])
 
-	#return json.dumps(manager.getAllInJson())
-	return {'someshit':'afafa'}
+	print(manager.getAllAsDict())
+	return json.dumps(manager.getAllAsDict())
 
 if __name__=="__main__":
 	app.run(host='0.0.0.0')

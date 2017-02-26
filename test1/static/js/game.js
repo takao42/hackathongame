@@ -34,17 +34,14 @@ function create() {
     this.ball = game.add.sprite(100, 100, 'ball');
     this.ball.anchor.set(0.5, 0.5);
 
-    var playerX = 0;
-    var playerY = 0;
-    var playerID = 0;
-
     // request adding new player to the game server
     $.ajax({
         url: '/addNewPlayer', 
         type: 'POST', 
         dataType: 'json',
+        context: this,
         async: false, 
-        data: JSON.stringify({Player:"ShittyPlayer"}),
+        data: JSON.stringify({name:"ShittyPlayer"}),
         contentType: "application/json; charset=utf-8",
 
         success: function(response) {
@@ -56,72 +53,56 @@ function create() {
             //this.ball = game.add.sprite(game.world.centerX, game.world.centerY, 'ball');
             
             //console.log(response.x)
-            playerX = response.x;
-            playerY = response.y;
-            playerID = response.ID;
+            this.ball.x = response.x;
+            this.ball.y = response.y;
+            this.playerID = response.ID;
             
         }
     });
-
-    this.ball.x = playerX;
-    this.ball.y = playerY;
-    this.playerID = playerID;
-
-
-    // request adding new player to the game server
-    $.ajax({
-        url: '/gameState', 
-        type: 'POST', 
-        dataType: 'json',
-        async: false, 
-        data: JSON.stringify({ID:this.playerID, x:this.ball.x, y:this.ball.y}),
-        contentType: "application/json; charset=utf-8",
-
-        success: function(response) {
-            //  get your element to update and inject some content
-            console.log(response);
-        }
-    });
-    
 
 }
  
 // Called once every frame, ideally 60 times per second
 function update() {
 
-    // Poll the arrow keys to move the ball
+    var xMove = 0;
+    var yMove = 0;
+
+    // Poll the arrow keys to move the player
     if (this.keys.left.isDown) {
-        this.ball.x -= BallWorld.velocity;
+        xMove = -1;
     }
     if (this.keys.right.isDown) {
-        this.ball.x += BallWorld.velocity;
+        xMove = 1;
     }
     if (this.keys.up.isDown) {
-        this.ball.y -= BallWorld.velocity;
+        yMove = -1;
     }
     if (this.keys.down.isDown) {
-        this.ball.y += BallWorld.velocity;
-    }
- 
-    // Prevent ball from escaping outside the stage's boundaries
-    var halfWidth = this.ball.width / 2;
-    var halfHeight = this.ball.height / 2;
-    if ((this.ball.x - halfWidth) < 0) {
-        this.ball.x = halfWidth;
-    }
-    if ((this.ball.x + halfWidth) > game.width) {
-        this.ball.x = game.width - halfWidth;
-    }
-    if ((this.ball.y - halfHeight) < 0) {
-        this.ball.y = halfHeight;
-    }
-    if ((this.ball.y + halfHeight) > game.height) {
-        this.ball.y = game.height - halfHeight;
+        yMove = 1;
     }
 
- 
-    
+    // request adding new player to the game server
+    $.ajax({
+        url: '/gameState', 
+        type: 'POST', 
+        dataType: 'json',
+        context: this,
+        async: false, 
+        data: JSON.stringify({ID:this.playerID, xUnitMove:xMove, yUnitMove:yMove}),
+        contentType: "application/json; charset=utf-8",
+
+        success: function(response) {
+            //  get your element to update and inject some content
+            console.log(response);
+            console.log(response.renderID0.x);
+            this.ball.x = response.renderID0.x;
+            this.ball.x = response['renderID0'].x;
+            this.ball.y = response.renderID0.y;
+        }
+    });
+
+    // render all players
 
 
-    
 }

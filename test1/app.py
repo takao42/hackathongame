@@ -1,18 +1,21 @@
 from flask import Flask,render_template, request,json
 from random import randint
+import math
 
 class Player:
 	""" 
 	player class 
 	"""
 
-	def __init__(self, name, ID, x, y):
+	def __init__(self, name, ID, x, y, at, ag):
 		""" constructor """
 
 		self.name = name
 		self.ID = ID
 		self.x = x
 		self.y = y
+		self.at = at;
+		self.ag = ag;
 
 	def getName(self):
 		return self.name
@@ -25,21 +28,33 @@ class Player:
 
 	def getY(self):
 		return self.y
+		
+	def getAT(self):
+		return self.at
+		
+	def getAG(self):
+		return self.ag
 
-	def move(self, xMove, yMove):
+	def move(self, xMove, yMove, at):
 		self.x += xMove
 		self.y += yMove
+		self.at += at
 
-	def setPos(self, x, y):
+	def movegun(self, ag):
+		self.ag = ag
+	
+	def setPos(self, x, y, at, ag):
 		self.x = x
-		self.y = y		
-
+		self.y = y	
+		self.at = at
+		self.ag = ag
+		
 	def getInfo(self):
 		""" 
 		return player info as a dictionary 
 		"""
 
-		info = {'name':self.name, 'ID':self.ID, 'x':self.x, 'y':self.y}
+		info = {'name':self.name, 'ID':self.ID, 'x':self.x, 'y':self.y, 'at':self.at, 'ag':self.ag}
 		return info
 
 class GameManager:
@@ -60,13 +75,15 @@ class GameManager:
 
 		x = randint(0,500)
 		y = randint(0,500)
-		newPlayer = Player(name, self.okID, x, y)
+		at = 90
+		ag = 90
+		newPlayer = Player(name, self.okID, x, y, at, ag)
 		self.playerList.append(newPlayer)
 		self.okID += 1
 
 		return newPlayer.getInfo()
 
-	def updatePlayerPos(self, ID, x, y):
+	def updatePlayerPos(self, ID, x, y, at, ag):
 		""" 
 		directly update the position of the player 
 		with the given ID
@@ -74,23 +91,43 @@ class GameManager:
 
 		for idx in range(len(self.playerList)):
 			if self.playerList[idx].getID() == ID:
-				self.playerList[idx].set(x, y)
+				self.playerList[idx].set(x, y, at, ag)
 
-	def movePlayer(self, ID, xUnitMove, yUnitMove):
+	def movePlayer(self, ID, xMouse, yMouse, angleT, upDown):
 		""" 
 		move the player with the given ID 
 		"""
-
+		xMove = 0
+		yMove = 0
+		
 		for idx in range(len(self.playerList)):
 			if self.playerList[idx].getID() == ID:
-				futureX = self.playerList[idx].getX() + xUnitMove*self.velocity
-				futureY = self.playerList[idx].getY() + yUnitMove*self.velocity
+				"""
+				move tank
+				"""
+				if upDown == 1:
+					xMove = math.cos(math.radians(self.playerList[idx].at + angleT));
+					yMove = math.sin(math.radians(self.playerList[idx].at + angleT));
+				if upDown == -1:
+					xMove = -math.cos(math.radians(self.playerList[idx].at + angleT));
+					yMove = -math.sin(math.radians(self.playerList[idx].at + angleT));				
+							
+				futureX = self.playerList[idx].getX() + xMove*self.velocity
+				futureY = self.playerList[idx].getY() + yMove*self.velocity
+				
 				xIsInRange = futureX > 0 and futureX < 500
 				yIsInRange = futureY > 0 and futureY < 500
 				if(xIsInRange and yIsInRange):
 					# edge case
-					self.playerList[idx].move(xUnitMove*self.velocity, yUnitMove*self.velocity)
+					self.playerList[idx].move(xMove*self.velocity, yMove*self.velocity, angleT)
 
+				"""
+				move gun turret
+				"""
+				dx = xMouse - self.playerList[idx].x;
+				dy = yMouse - self.playerList[idx].y;			
+				self.playerList[idx].movegun(math.degrees((math.atan2(dy,dx))%(2*math.pi)));
+   
 	def delPlayer(self, ID):
 		"""
 		delete the player with the given ID
@@ -117,7 +154,7 @@ class GameManager:
 		renderID = 0
 		for player in self.playerList:
 			info = player.getInfo()
-			playerDict['renderID{}'.format(renderID)] = {'name':info['name'], 'ID': player.ID, 'x':info['x'], 'y':info['y']}
+			playerDict['renderID{}'.format(renderID)] = {'name':info['name'], 'ID': player.ID, 'x':info['x'], 'y':info['y'], 'at':info['at'], 'ag':info['ag']}
 			renderID += 1
 		playerDict['count'] = renderID 
 		return playerDict
@@ -184,7 +221,7 @@ def gameState():
 	#player = request.form['player']
 	playerData = request.get_json()
 	#print('new move {}'.format(playerData))
-	manager.movePlayer(playerData['ID'], playerData['xUnitMove'], playerData['yUnitMove'])
+	manager.movePlayer(playerData['ID'], playerData['xMouse'], playerData['yMouse'], playerData['angleT'], playerData['upDown'])
 
 	#print(manager.getAllAsDict())
 	return json.dumps(manager.getAllAsDict())

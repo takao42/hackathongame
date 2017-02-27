@@ -1,3 +1,4 @@
+
 // Create a new Phaser game object with a single state that has 3 functions
 var game = new Phaser.Game(500, 500, Phaser.AUTO, '', {
     preload: preload,
@@ -9,8 +10,8 @@ var game = new Phaser.Game(500, 500, Phaser.AUTO, '', {
 function preload() {
  
     // Load our image assets
-    game.load.image('ball', 'static/img/tank.png');
-    game.load.image('ball2', 'static/img/tankgun.png');
+    game.load.image('tank', 'static/img/tank.png');
+    game.load.image('tankgun', 'static/img/tankgun.png');
 }
  
 // Called after preload
@@ -29,39 +30,31 @@ function create() {
 
     // local list of all players
     this.playerList = []
-    //local list of all gun torrets
-    this.gunList = []
+	
+	//local list of players gun turrets
+	this.gunList = []
 
-    var playername;
-    do {
-        playername=prompt("Please enter your name");
-    }
-    while(playername.length < 1);
-    
+    // request adding new player to the game server
     $.ajax({
-        // request adding new player to the game server
-
         url: '/addNewPlayer', 
         type: 'POST', 
         dataType: 'json',
         context: this,
         async: false, 
-        data: JSON.stringify({name:playername}),
+        data: JSON.stringify({name:"ShittyPlayer"}),
         contentType: "application/json; charset=utf-8",
 
         success: function(response) {
-            // get the response(id, x, y) from the server
-            // and add it to the local player list
 
-            console.log(response);
             this.playerID = response.ID;
 
-            player = game.add.sprite(response.x, response.y, 'ball');
+            player = game.add.sprite(response.x, response.y, 'tank');
             player.anchor.set(0.5, 0.5);
             
-            gun = game.add.image(response.x, response.y, 'ball2');
-	    gun.anchor.set(0.5, 0.5);
-
+            gun = game.add.image(response.x, response.y, 'tankgun');
+			gun.anchor.set(0.5, 0.5);
+			gun.angle = response.a;
+			
             this.playerList.push(player)
             this.gunList.push(gun)
         }
@@ -72,75 +65,77 @@ function create() {
 // Called once every frame, ideally 60 times per second
 function update() {
 
-    var xUnitMove = 0;
-    var yUnitMove = 0;
+    var xMouse = this.input.mousePointer.x;
+    var yMouse = this.input.mousePointer.y;
+    var angtank = 0;
+    var upDown = 0;
 
     // Poll the arrow keys to move the player
     if (this.keys.left.isDown) {
-        this.playerList[0].angle += -5;
+		angtank = -5;      			
     }
     if (this.keys.right.isDown) {
-        this.playerList[0].angle += 5;
+		angtank = 5;
     }
     if (this.keys.up.isDown) {
-	xUnitMove = Math.cos(this.math.degToRad(this.playerList[0].angle));
-        yUnitMove = Math.sin(this.math.degToRad(this.playerList[0].angle));
+        upDown = 1;
     }
     if (this.keys.down.isDown) {
-	xUnitMove = -Math.cos(this.math.degToRad(this.playerList[0].angle));
-        yUnitMove = -Math.sin(this.math.degToRad(this.playerList[0].angle));
+        upDown = -1;
     }
-
-    
+  
+    // send the current position to the server and
+    // recieve the positions of all the players
     $.ajax({
-        // send the current position to the server and
-        
         url: '/gameState', 
         type: 'POST', 
         dataType: 'json',
         context: this,
         async: false, 
-        data: JSON.stringify({ID:this.playerID, xUnitMove:xUnitMove, yUnitMove:yUnitMove}),
+        data: JSON.stringify({ID:this.playerID, xMouse:xMouse, yMouse:yMouse, angleT:angtank, upDown:upDown}),
         contentType: "application/json; charset=utf-8",
 
         success: function(response) {
-            // get a response (positions of all players) from the server
-            // and render the game state
-
+            //  get your element to update and inject some content
+            //console.log(response);
+            //console.log(response.renderID0.x);
+            //this.ball.x = response.renderID0.x;
             if (response.count > 0) {
-                // render if there is at least one player
-
+                //console.log(response.count);
+                //console.log(this.playerList.length);
                 if(this.playerList.length < response.count){
                     // add the new player
 
                     var renderID = 'renderID' + (response.count-1);
-                    //console.log(renderID)
-                    newPlayer = game.add.sprite(response[renderID].x, response[renderID].y, 'ball');
+                    console.log(renderID)
+                    newPlayer = game.add.sprite(response[renderID].x, response[renderID].y, 'tank');
                     newPlayer.anchor.set(0.5, 0.5);
+                    newPlayer.angle = (response[renderID].at);
                     this.playerList.push(newPlayer)
+                    
+                    newPlayerGun = game.add.image(response[renderID].x, response[renderID].y, 'tankgun');
+                    newPlayerGun.anchor.set(0.5, 0.5);
+                    newPlayerGun.angle = (response[renderID].ag);
+                    this.gunList.push(newPlayerGun)
                 }
                 for(var i = 0; i < response.count; i++){
-                    // render all players
-
                     var renderID = 'renderID' + i;
                     this.playerList[i].x = response[renderID].x;
                     this.playerList[i].y = response[renderID].y;
-                    
-                }      
+                    this.playerList[i].angle = response[renderID].at;
+                    this.gunList[i].x = response[renderID].x;
+                    this.gunList[i].y = response[renderID].y;
+					this.gunList[i].angle = response[renderID].ag;                   
+                }
+                
+                
+                
             }
-	    this.gunList[0].x = this.playerList[0].x;
-	    this.gunList[0].y = this.playerList[0].y;
-
-	    this.gunList[0].angle = this.math.radToDeg(this.math.angleBetween(this.playerList[0].x, this.playerList[0].y, this.input.mousePointer.x, this.input.mousePointer.y));
-
-        },
-        error: function(){
-            // exit game if client is disconnected from server
-
-            alert('Disconnected from server! Server might be dead. ');
-            game.destroy()
-        }
+            
+	     }
     });
 
-    
+    // render all players
+
+
 }
